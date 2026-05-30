@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temple of Loki</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background-color: #0a0300;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            position: relative;
+            cursor: default;
+            padding: 20px 20px 100px;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Усиленная тряска — 1.2 секунды */
+        body.shake {
+            animation: screen-shake 1.2s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+
+        @keyframes screen-shake {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            5% { transform: translate(-22px, 10px) rotate(-1.8deg); }
+            15% { transform: translate(22px, -14px) rotate(1.8deg); }
+            25% { transform: translate(-16px, -6px) rotate(-1deg); }
+            35% { transform: translate(16px, 18px) rotate(1deg); }
+            45% { transform: translate(-18px, -10px) rotate(-1.2deg); }
+            55% { transform: translate(18px, 6px) rotate(1.2deg); }
+            65% { transform: translate(-10px, 14px) rotate(-0.6deg); }
+            75% { transform: translate(14px, -16px) rotate(0.6deg); }
+            85% { transform: translate(-12px, 0) rotate(-0.4deg); }
+            95% { transform: translate(8px, -8px) rotate(0.4deg); }
+        }
+
+        @media (max-width: 480px) {
+            @keyframes screen-shake {
+                0%, 100% { transform: translate(0, 0) rotate(0deg); }
+                5% { transform: translate(-16px, 6px) rotate(-1deg); }
+                15% { transform: translate(16px, -10px) rotate(1deg); }
+                25% { transform: translate(-12px, -4px) rotate(-0.5deg); }
+                35% { transform: translate(12px, 14px) rotate(0.5deg); }
+                45% { transform: translate(-14px, -8px) rotate(-0.8deg); }
+                55% { transform: translate(14px, 4px) rotate(0.8deg); }
+                65% { transform: translate(-8px, 10px) rotate(-0.4deg); }
+                75% { transform: translate(10px, -12px) rotate(0.4deg); }
+                85% { transform: translate(-10px, 0) rotate(-0.3deg); }
+                95% { transform: translate(6px, -6px) rotate(0.3deg); }
+            }
+        }
+
+        .block-flicker {
+            animation: block-flicker-anim 0.8s ease-in-out;
+        }
+
+        @keyframes block-flicker-anim {
+            0%, 100% { opacity: 1; }
+            20% { opacity: 0.2; }
+            50% { opacity: 0.9; }
+            80% { opacity: 0.2; }
+        }
+
+        /* Оверлей — надпись в верхней части экрана */
+        .loki-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 5vh; /* небольшой отступ сверху */
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .loki-overlay-text {
+            font-size: clamp(2.5rem, 15vw, 6rem);
+            font-weight: 900;
+            color: #ffaa00;
+            text-shadow: 0 0 60px #ff5500, 0 0 120px #ff2200;
+            animation: pulse-text 0.6s ease-in-out infinite alternate;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        @keyframes pulse-text {
+            from { text-shadow: 0 0 30px #ff4400, 0 0 60px #ff2200; }
+            to { text-shadow: 0 0 80px #ffaa00, 0 0 160px #ff6600; }
+        }
+
+        /* Остальные стили без изменений */
+        .fire-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: radial-gradient(ellipse at center bottom, #1a0500 0%, #0a0200 60%, #000000 100%);
+            overflow: hidden;
+        }
+
+        .flame-layer {
+            position: absolute;
+            bottom: 0;
+            left: -10%;
+            width: 120%;
+            height: 100%;
+            opacity: 0.7;
+            filter: blur(8px);
+        }
+
+        .flame-layer-1 {
+            background: radial-gradient(ellipse at 50% 100%, #ff1a00 0%, #cc0000 15%, #991400 30%, #661400 45%, #330a00 60%, transparent 75%);
+            animation: flame-height 3s ease-in-out infinite alternate, flame-drift 5s ease-in-out infinite alternate;
+            opacity: 0.9;
+        }
+
+        .flame-layer-2 {
+            background: radial-gradient(ellipse at 48% 100%, #ff4500 0%, #ff2200 18%, #cc1100 35%, #801000 50%, transparent 68%);
+            animation: flame-height 2.5s ease-in-out 0.3s infinite alternate, flame-drift 4s ease-in-out 0.5s infinite alternate-reverse;
+            opacity: 0.85;
+            filter: blur(12px);
+        }
+
+        .flame-layer-3 {
+            background: radial-gradient(ellipse at 52% 100%, #ff6a00 0%, #ff3300 15%, #dd1100 30%, transparent 55%);
+            animation: flame-height 2s ease-in-out 0.7s infinite alternate, flame-drift 3s ease-in-out 0.2s infinite alternate;
+            opacity: 0.75;
+            filter: blur(6px);
+        }
+
+        .flame-layer-4 {
+            background: radial-gradient(ellipse at 50% 100%, #ff9900 0%, #ff4400 12%, #ff0000 25%, transparent 45%);
+            animation: flame-height 1.7s ease-in-out 0.4s infinite alternate, flame-drift 2.8s ease-in-out 0.9s infinite alternate-reverse;
+            opacity: 0.8;
+            filter: blur(4px);
+        }
+
+        .flame-layer-5 {
+            background: radial-gradient(ellipse at 50% 100%, #ffcc00 0%, #ff8800 10%, #ff3300 22%, transparent 38%);
+            animation: flame-height 1.4s ease-in-out 0.2s infinite alternate, flame-drift 2.5s ease-in-out 0.7s infinite alternate;
+            opacity: 0.7;
+            filter: blur(3px);
+        }
+
+        .sparks-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .spark {
+            position: absolute;
+            bottom: 10%;
+            background: #ffaa00;
+            border-radius: 50%;
+            box-shadow: 0 0 6px 2px #ff4400, 0 0 12px 4px #ff2200;
+            animation: spark-fly linear infinite;
+        }
+
+        .smoke-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: radial-gradient(ellipse at 50% 120%, rgba(20, 5, 0, 0.4) 0%, rgba(10, 2, 0, 0.6) 40%, rgba(0, 0, 0, 0.8) 100%);
+            pointer-events: none;
+        }
+
+        .title {
+            position: relative;
+            z-index: 3;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: transparent;
+            -webkit-text-stroke: 2px #ff7700;
+            text-shadow: 0 0 8px #ff2a00, 0 0 18px #ff3300, 0 0 35px #cc1100, 0 0 70px #990000, 0 0 100px #660000;
+            animation: title-pulse 8s ease-in-out infinite, title-float 6s ease-in-out infinite;
+            text-align: center;
+            padding: 0 10px;
+            user-select: none;
+            transition: all 0.3s ease;
+            font-size: clamp(3.5rem, 10vw, 8rem);
+            margin-bottom: 4rem;
+            will-change: text-shadow, transform;
+            transform: translateY(0);
+        }
+
+        .title:hover {
+            -webkit-text-stroke: 2px #ffaa00;
+            text-shadow: 0 0 15px #ff4400, 0 0 25px #ff5500, 0 0 50px #ff2200, 0 0 100px #cc0000, 0 0 160px #880000;
+        }
+
+        @keyframes title-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-2px); }
+        }
+
+        @keyframes title-pulse {
+            0%, 100% { text-shadow: 0 0 8px #ff2a00, 0 0 18px #ff3300, 0 0 35px #cc1100, 0 0 70px #990000, 0 0 100px #660000; }
+            50% { text-shadow: 0 0 12px #ff4400, 0 0 24px #ff4400, 0 0 45px #dd2200, 0 0 85px #aa0000, 0 0 120px #770000; }
+        }
+
+        @media (min-width: 1024px) {
+            .title {
+                font-size: 9rem;
+                letter-spacing: 0.25em;
+                margin-bottom: 5rem;
+                -webkit-text-stroke: 2.5px #ff7700;
+                text-shadow: 0 0 12px #ff2a00, 0 0 25px #ff3300, 0 0 50px #cc1100, 0 0 100px #990000, 0 0 160px #660000, 0 0 240px #440000;
+            }
+            .title:hover {
+                text-shadow: 0 0 20px #ff4400, 0 0 40px #ff5500, 0 0 70px #ff2200, 0 0 130px #cc0000, 0 0 200px #990000, 0 0 280px #660000;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .title {
+                font-size: 4rem;
+                letter-spacing: 0.12em;
+                -webkit-text-stroke: 1.5px #ff7700;
+                text-shadow: 0 0 6px #ff2a00, 0 0 15px #ff3300, 0 0 30px #cc1100, 0 0 50px #990000, 0 0 70px #660000;
+            }
+        }
+
+        .quote-block {
+            background: rgba(0, 0, 0, 0.75);
+            border: 1px solid rgba(255, 100, 0, 0.12);
+            border-radius: 12px;
+            padding: 2rem 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            color: rgba(255, 220, 150, 0.95);
+            font-size: 1.2rem;
+            line-height: 1.7;
+            letter-spacing: 0.05em;
+            font-style: normal;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+            position: relative;
+            z-index: 3;
+            width: 100%;
+            max-width: 600px;
+            transition: box-shadow 0.3s ease;
+        }
+
+        @media (min-width: 1024px) {
+            .quote-block {
+                max-width: 850px;
+                font-size: 1.5rem;
+                padding: 3.5rem 4rem;
+                margin-bottom: 8rem;
+                border-radius: 16px;
+                border-color: rgba(255, 100, 0, 0.2);
+                box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 20px rgba(255,50,0,0.2);
+            }
+        }
+
+        .quote-text { margin: 0; font-weight: 300; }
+        .quote-author {
+            display: block;
+            margin-top: 1.2rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: rgba(255, 140, 60, 0.8);
+            font-style: normal;
+            text-align: right;
+        }
+
+        .altar-block, .ledger-block {
+            position: relative;
+            z-index: 3;
+            width: 100%;
+            max-width: 600px;
+            background: rgba(5, 1, 0, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 80, 0, 0.4);
+            border-radius: 24px;
+            padding: 2.5rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 0 40px rgba(255, 60, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            transition: box-shadow 0.4s ease;
+        }
+
+        @media (min-width: 769px) {
+            .altar-block, .ledger-block {
+                max-width: 850px;
+                padding: 4rem 3.5rem;
+                margin-bottom: 8rem;
+                border-radius: 32px;
+                border-width: 2px;
+                box-shadow: 0 0 50px rgba(255, 60, 0, 0.4), 0 0 20px rgba(255, 30, 0, 0.2);
+            }
+            .altar-block:hover, .ledger-block:hover, .quote-block:hover {
+                box-shadow: 0 30px 70px rgba(255, 80, 0, 0.6);
+            }
+        }
+
+        .altar-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #ffaa00;
+            text-shadow: 0 0 15px #ff5500;
+            margin: 0;
+            text-align: center;
+        }
+        @media (min-width: 769px) { .altar-title { font-size: 2.8rem; } }
+
+        .ledger-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #ffaa00;
+            text-shadow: 0 0 15px #ff5500;
+            margin: 0;
+            text-align: center;
+        }
+        @media (min-width: 769px) { .ledger-title { font-size: 2.4rem; } }
+
+        .altar-circle-wrapper {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0.5rem 0;
+        }
+        @media (min-width: 769px) { .altar-circle-wrapper { width: 210px; height: 210px; } }
+
+        .altar-circle-wrapper::before,
+        .altar-circle-wrapper::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0.4;
+        }
+        .altar-circle-wrapper::before {
+            inset: -12px;
+            border: 2px dashed rgba(255, 150, 50, 0.7);
+            animation: spin 30s linear infinite;
+            box-shadow: 0 0 15px rgba(255, 100, 0, 0.4);
+        }
+        .altar-circle-wrapper::after {
+            inset: -26px;
+            border: 1px solid rgba(255, 100, 0, 0.5);
+            animation: spin 40s linear infinite reverse;
+            box-shadow: 0 0 20px rgba(255, 60, 0, 0.3);
+        }
+
+        .altar-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, rgba(255, 80, 0, 0.4), rgba(0, 0, 0, 0.8));
+            border: 2px solid rgba(255, 150, 0, 0.8);
+            box-shadow: 0 0 50px rgba(255, 60, 0, 0.7), inset 0 0 35px rgba(255, 40, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+            user-select: none;
+            z-index: 2;
+        }
+        @media (min-width: 769px) { .altar-circle { width: 170px; height: 170px; } }
+
+        .altar-circle:hover {
+            border-color: #ffdd00;
+            box-shadow: 0 0 90px rgba(255, 100, 0, 1), inset 0 0 60px rgba(255, 60, 0, 0.8);
+        }
+        .altar-circle:active { transform: scale(0.97); transition: 0.1s; }
+
+        .altar-label { font-size: 1rem; color: rgba(255, 220, 130, 0.95); letter-spacing: 0.05em; text-align: center; line-height: 1.3; font-weight: 500; }
+        .altar-hint { font-size: 0.7rem; color: rgba(255, 150, 70, 0.8); margin-top: 0.2rem; }
+        .altar-response { font-size: 1rem; color: #ffcc88; min-height: 2.2em; font-style: italic; text-align: center; line-height: 1.5; width: 100%; }
+
+        .grievance-form { width: 100%; display: flex; flex-direction: column; gap: 1rem; transition: opacity 0.3s ease, transform 0.3s ease; }
+        .grievance-form.hidden { display: none; }
+
+        .grievance-textarea {
+            width: 100%;
+            min-height: 80px;
+            background: rgba(0,0,0,0.7);
+            border: 1px solid rgba(255, 120, 0, 0.4);
+            border-radius: 12px;
+            color: #ffddbb;
+            font-size: 1rem;
+            padding: 1rem;
+            resize: vertical;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        @media (min-width: 769px) { .grievance-textarea { min-height: 110px; font-size: 1.1rem; padding: 1.2rem; } }
+        .grievance-textarea:focus { border-color: #ffaa00; box-shadow: 0 0 20px rgba(255, 100, 0, 0.6); }
+
+        .grievance-submit {
+            align-self: center;
+            padding: 0.8rem 2.5rem;
+            background: transparent;
+            border: 2px solid rgba(255, 140, 0, 0.6);
+            border-radius: 50px;
+            color: #ffbb77;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(255, 80, 0, 0.3);
+        }
+        @media (min-width: 769px) { .grievance-submit { padding: 1rem 3.5rem; font-size: 1.15rem; } }
+        .grievance-submit:hover { background: rgba(255, 60, 0, 0.15); border-color: #ffaa00; box-shadow: 0 0 30px rgba(255, 100, 0, 0.7); color: #ffdd88; }
+
+        .verdict-box { text-align: center; font-size: 1rem; color: #ffcc88; font-style: italic; line-height: 1.6; padding: 0.5rem; transition: opacity 0.3s ease; }
+        .verdict-box.hidden { display: none; }
+
+        .file-again-btn {
+            margin-top: 0.8rem;
+            padding: 0.5rem 1.8rem;
+            background: transparent;
+            border: 1px solid rgba(255, 140, 0, 0.5);
+            border-radius: 50px;
+            color: #ffbb77;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .file-again-btn:hover { background: rgba(255, 60, 0, 0.15); border-color: #ffaa00; }
+
+        .ragnarok-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(8, 2, 0, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255, 90, 0, 0.3);
+            z-index: 10;
+            padding: 1rem 1.5rem;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .ragnarok-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(255, 120, 60, 0.8); }
+        .ragnarok-time { font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace; font-size: 1.3rem; font-weight: 500; color: #ffaa55; text-shadow: 0 0 12px #ff4400; }
+
+        .foundling-toast {
+            position: fixed;
+            bottom: 120px;
+            right: 20px;
+            max-width: 320px;
+            background: rgba(10, 2, 0, 0.9);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 130, 0, 0.6);
+            border-radius: 16px;
+            padding: 1.2rem 1.5rem;
+            color: #ffcc88;
+            font-style: italic;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9), 0 0 20px rgba(255, 60, 0, 0.4);
+            z-index: 20;
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+            pointer-events: none;
+        }
+        .foundling-toast.show { transform: translateX(0); }
+        .foundling-toast .gift-text { font-size: 1rem; margin-bottom: 0.3rem; }
+        .foundling-toast .gift-item { font-weight: bold; color: #ffaa00; }
+
+        @keyframes flame-height {
+            0% { transform: scaleY(0.85) scaleX(0.9); }
+            50% { transform: scaleY(1.15) scaleX(1.05); }
+            100% { transform: scaleY(0.95) scaleX(0.95); }
+        }
+        @keyframes flame-drift {
+            0% { transform: translateX(-3%) skewX(-2deg); }
+            50% { transform: translateX(4%) skewX(3deg); }
+            100% { transform: translateX(-2%) skewX(-1deg); }
+        }
+        @keyframes spark-fly {
+            0% { transform: translateY(0) translateX(0) scale(1); opacity: 1; }
+            20% { opacity: 0.9; }
+            60% { opacity: 0.4; }
+            100% { transform: translateY(-100vh) translateX(120px) scale(0.2); opacity: 0; }
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .quote-block { padding: 1.5rem; font-size: 1.1rem; margin-bottom: 2rem; }
+            .altar-block, .ledger-block { padding: 2rem 1.5rem; margin-bottom: 2rem; }
+            .altar-circle-wrapper { width: 160px; height: 160px; }
+            .altar-circle { width: 130px; height: 130px; }
+            .altar-title, .ledger-title { font-size: 1.6rem; }
+            .ragnarok-time { font-size: 1.1rem; }
+            .foundling-toast { bottom: 100px; right: 10px; max-width: 260px; }
+        }
+        @media (max-width: 480px) {
+            .quote-block { padding: 1.2rem; font-size: 1rem; }
+            .altar-block, .ledger-block { padding: 1.5rem 1rem; }
+            .altar-circle-wrapper { width: 140px; height: 140px; }
+            .altar-circle { width: 110px; height: 110px; }
+            .altar-title, .ledger-title { font-size: 1.4rem; }
+            .ragnarok-footer { flex-direction: column; gap: 0.2rem; padding: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="fire-container">
+        <div class="flame-layer flame-layer-1"></div>
+        <div class="flame-layer flame-layer-2"></div>
+        <div class="flame-layer flame-layer-3"></div>
+        <div class="flame-layer flame-layer-4"></div>
+        <div class="flame-layer flame-layer-5"></div>
+    </div>
+    <div class="sparks-container" id="sparksContainer"></div>
+    <div class="smoke-overlay"></div>
+
+    <h1 class="title">Temple of Loki</h1>
+
+    <div class="quote-block">
+        <div class="quote-text">
+            "Ale hast thou brewed, but, Ægir, now<br>
+            Such feasts shalt thou make no more;<br>
+            O'er all that thou hast which is here within<br>
+            Shall play the flickering flames."
+            <span class="quote-author">— Lokasenna, The Poetic Edda</span>
+        </div>
+    </div>
+
+    <div class="altar-block">
+        <div class="altar-title">⚡ Altar of Chaos ⚡</div>
+        <div class="altar-circle-wrapper">
+            <div class="altar-circle" id="altarCircle">
+                <span class="altar-label">Bring an Offering</span>
+                <span class="altar-hint">double‑click</span>
+            </div>
+        </div>
+        <div class="altar-response" id="altarResponse"></div>
+    </div>
+
+    <div class="ledger-block">
+        <div class="ledger-title">📖 Ledger of Grievances</div>
+        <div class="grievance-form" id="grievanceForm">
+            <textarea class="grievance-textarea" id="grievanceInput" placeholder="Write your complaint here..."></textarea>
+            <button class="grievance-submit" id="sendGrievanceBtn">Send to Loki</button>
+        </div>
+        <div class="verdict-box hidden" id="verdictBox">
+            <p id="verdictText"></p>
+            <button class="file-again-btn" id="fileAgainBtn">File another grievance</button>
+        </div>
+    </div>
+
+    <div class="ragnarok-footer">
+        <span class="ragnarok-label">Until Ragnarök</span>
+        <span class="ragnarok-time" id="ragnarokTimer">calculating...</span>
+    </div>
+
+    <div class="foundling-toast" id="foundlingToast">
+        <div class="gift-text">🎁 Loki left you a gift:</div>
+        <div class="gift-item" id="giftItem"></div>
+    </div>
+
+    <script>
+        // Искры
+        function createSpark() {
+            const container = document.getElementById('sparksContainer');
+            const spark = document.createElement('div');
+            spark.classList.add('spark');
+            const isMobile = window.innerWidth <= 480;
+            const size = isMobile ? Math.random() * 2.5 + 1.5 : Math.random() * 7 + 2.5;
+            spark.style.width = size + 'px';
+            spark.style.height = size + 'px';
+            spark.style.left = Math.random() * 100 + '%';
+            spark.style.bottom = Math.random() * 15 + '%';
+            spark.style.animationDuration = Math.random() * 3 + 2 + 's';
+            container.appendChild(spark);
+            setTimeout(() => spark.remove(), (Math.random() * 3 + 2) * 1000);
+        }
+        function getSparkInterval() { return window.innerWidth <= 480 ? 250 : 120; }
+        let sparkInterval = setInterval(createSpark, getSparkInterval());
+        window.addEventListener('resize', () => {
+            clearInterval(sparkInterval);
+            sparkInterval = setInterval(createSpark, getSparkInterval());
+        });
+        const initialSparkCount = window.innerWidth <= 480 ? 10 : 40;
+        for (let i = 0; i < initialSparkCount; i++) setTimeout(createSpark, i * 50);
+
+        // Алтарь
+        const offerings = [
+            "a golden coin", "a raven feather", "a tiny spider",
+            "a line of ancient code", "a pinch of chaos",
+            "a broken key", "a whisper of flame",
+            "a crooked rune", "a shard of mischief",
+            "a forgotten lie", "a half-truth", "a twisted nail",
+            "a splash of mead", "a cat's step", "a woman's beard",
+            "a mountain root", "a bear's sinew", "a fish's breath",
+            "a bird's spittle", "a dead meme", "a slightly bent paperclip",
+            "a moldy slice of cheese", "a half-eaten sandwich",
+            "a rubber duck", "a lost sock", "a sincere apology from a cat",
+            "a joke Thor didn't understand", "a memory of a future that never was",
+            "a handful of stardust", "a nuclear launch code",
+            "a black hole in a jar", "a time paradox",
+            "the last slice of pizza", "a dragon's sneeze",
+            "a dream you forgot", "a Wi‑Fi signal from another dimension",
+            "a selfie with Odin", "a tear from a stone",
+            "a cookie from Jotunheim", "a feather from Sleipnir",
+            "a working printer", "a stable release of your favorite software",
+            "a perfectly timed punchline", "the sound of one hand clapping",
+            "a perfectly preserved autumn leaf",
+            "a forgotten song hummed by the wind",
+            "a riddle with no answer",
+            "a tiny hourglass with no sand",
+            "a mirror that shows yesterday",
+            "a key to a door that doesn't exist",
+            "a book written in invisible ink",
+            "a compass that points to mischief",
+            "a feather from an unnamed bird",
+            "a jar of captured laughter",
+            "a silent echo",
+            "a snowflake that never melts",
+            "a map of forgotten paths",
+            "a lantern lit by moonlight",
+            "a thread from the Norns' tapestry",
+            "a pebble from the roots of Yggdrasil",
+            "a whisper of a forgotten promise"
+        ];
+
+        const responses = [
+            "This is useless, but amusing.",
+            "A curious gift. I'll keep it.",
+            "You amuse me, mortal.",
+            "Hmph. Unexpected.",
+            "Not bad, for a mayfly.",
+            "Is this all you've got?",
+            "I accept… for now.",
+            "How utterly pointless. I like it.",
+            "Chaos thanks you.",
+            "Oh, this will cause trouble later.",
+            "You're learning.",
+            "Deliciously absurd.",
+            "Pathetic. Truly pathetic.",
+            "My children give me worse things.",
+            "Are you even trying?",
+            "This is worse than Baldr's death.",
+            "I've seen better offerings from a goat.",
+            "Useless as a shield made of paper.",
+            "Next time bring something that doesn't insult me.",
+            "Hah! Is that the best you can do?",
+            "I'm not impressed, mortal.",
+            "Even Thor would laugh at this.",
+            "A bug would be more valuable.",
+            "How dare you waste my time.",
+            "I'll put it next to Odin's eye.",
+            "That's cute. I'll use it to start a fire.",
+            "If I wanted junk, I'd visit a dwarven forge.",
+            "Your offering is noted. And ignored.",
+            "Is this a tribute or an insult? I can't tell.",
+            "Thanks, I'll feed it to Fenrir.",
+            "A piece of your soul? Oh wait, it's just rubbish.",
+            "I've been alive for eons, and this is what you bring?",
+            "Congratulations, you've made me yawn.",
+            "It's the thought that counts. Yours was clearly absent.",
+            "This goes straight to the flaming dumpster.",
+            "Do you kiss your mother with that offering?",
+            "I'll treasure it... psych!",
+            "Are you a frost giant? Because this is ice cold.",
+            "Hahaha! Oh, you're serious?",
+            "Well, that's a first. Not a good first, but a first.",
+            "I'll give you points for creativity. Negative points.",
+            "Interesting... like a train wreck.",
+            "I'm almost impressed. Almost.",
+            "If nonsense were currency, you'd be rich.",
+            "You made me smile. It won't last.",
+            "Okay, this one tickled me. Don't tell anyone.",
+            "Finally, something that doesn't make me want to set things on fire. Much.",
+            "I might actually use this to prank Thor. Well done.",
+            "I'm actually pleased. Don't tell anyone.",
+            "This offering has a certain… charm. I'll spare you today.",
+            "You have potential, mortal. Keep bribing me.",
+            "A delightful little absurdity. My day is slightly better.",
+            "I'll accept this with a grin. Which is rare.",
+            "Not bad. Not bad at all. You may survive Ragnarök.",
+            "This gift tickles my chaotic heart. Well done.",
+            "A worthy tribute! I shall cause slightly less mischief in your honour.",
+            "You understand me. That's either wonderful or terrifying.",
+            "I'm almost impressed. I said almost, don't get cocky.",
+            "This pleases the trickster. A rare feat.",
+            "I'll treasure this until I get bored. So, for a while."
+        ];
+
+        function shuffle(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        let upcomingOfferings = [], upcomingResponses = [];
+        function refillOfferings() { if (upcomingOfferings.length === 0) upcomingOfferings = shuffle([...offerings]); }
+        function refillResponses() { if (upcomingResponses.length === 0) upcomingResponses = shuffle([...responses]); }
+        function getNextOffering() { refillOfferings(); return upcomingOfferings.shift(); }
+        function getNextResponse() { refillResponses(); return upcomingResponses.shift(); }
+
+        const altarCircle = document.getElementById('altarCircle');
+        const altarResponse = document.getElementById('altarResponse');
+        altarCircle.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            const offering = getNextOffering();
+            const response = getNextResponse();
+            altarResponse.innerHTML = `You offered <strong>${offering}</strong>.<br>"${response}"`;
+            altarCircle.style.transition = '0.1s';
+            altarCircle.style.boxShadow = '0 0 100px rgba(255, 150, 0, 1), 0 0 150px rgba(255, 60, 0, 0.9)';
+            altarCircle.style.borderColor = '#ffcc00';
+            setTimeout(() => {
+                altarCircle.style.boxShadow = '';
+                altarCircle.style.borderColor = '';
+            }, 250);
+        });
+
+        // Книга жалоб
+        const grievanceForm = document.getElementById('grievanceForm');
+        const grievanceInput = document.getElementById('grievanceInput');
+        const sendBtn = document.getElementById('sendGrievanceBtn');
+        const verdictBox = document.getElementById('verdictBox');
+        const verdictText = document.getElementById('verdictText');
+        const fileAgainBtn = document.getElementById('fileAgainBtn');
+
+        const verdicts = [
+            "Your grievance has been noted. I'll look into it… possibly in a couple of centuries.",
+            "Your problem has been reviewed and deemed insufficiently interesting.",
+            "I passed your complaint to Thor. He said 'Mjölnir!' and walked away.",
+            "Complaint registered. Priority: none whatsoever.",
+            "Interesting. I'll use this as kindling for Ragnarök.",
+            "Your grievance has been fed to Fenrir. He found it bland.",
+            "Oh, another malcontent. Take a number.",
+            "I forwarded this to Hel. She enjoys reading grievances in the underworld.",
+            "A complaint? How original. I'll treasure it forever... or not.",
+            "This is exactly the kind of drivel I expect from mortals.",
+            "Your grievance was delicious. I'm still hungry though.",
+            "Consider your complaint officially ignored. Have a nice day.",
+            "I'll add this to my collection of things that don't matter.",
+            "You want justice? From me? How adorable.",
+            "I'll handle this right after I finish causing the apocalypse.",
+            "Ah, a grievance! I'll solve it by turning you into a salmon. Temporarily.",
+            "Your complaint is valid. Unfortunately, I don't care.",
+            "I've sent your grievance to the All-Father. He blinked.",
+            "This is touching. Like a troll's lullaby. Not at all.",
+            "Let me guess: someone didn't share their mead?",
+            "I'll investigate… right after I teach this goat to sing.",
+            "Your problem is noted in the great ledger of things that make me yawn.",
+            "I'll fix it tomorrow. Or the day after. Or never.",
+            "A heartfelt plea! I'm almost moved. Almost.",
+            "I'll discuss it with the Norns. They're terrible gossips, so everyone will know.",
+            "This is serious. I'll need to consult my pet serpent. He says no.",
+            "Your grievance has been turned into a limerick and distributed across the Nine Realms.",
+            "I'll help. By doing absolutely nothing. You're welcome.",
+            "I've placed your grievance in the 'maybe' pile. It's very small.",
+            "Your complaint inspired me to create a new form of chaos. Congratulations, it's worse now.",
+            "I read your grievance aloud at the Thing. The gods laughed. Especially Thor.",
+            "Your complaint reminds me of Balder's death: tragic, overrated, and entirely preventable.",
+            "I'll resolve this in a manner befitting my station. By ignoring it completely.",
+            "Splendid! Another grievance. My raven familiar shall preen while I pretend to read it.",
+            "I've delegated your case to a committee of dwarves. They argue best when drunk.",
+            "This grievance carries the weight of a feather from Valhalla's ceiling. That is, none.",
+            "I'll weave your sorrow into a new Saga. It will be titled 'The Boring Mortal's Lament'.",
+            "Your complaint is so minor that even Heimdall wouldn't bother to watch it.",
+            "I'll file this under 'Things to Ignore on a Rainy Day'. It's never raining in Asgard.",
+            "Fear not! I've dispatched a Valkyrie to… bring me a drink while I think about your problem.",
+            "Your grievance is like Sif's golden hair: beautiful, but it distracts from the real issues.",
+            "I'll assign this to my son, the World Serpent. He has a lot of free time around the ocean.",
+            "Your plea has been burned in the sacred flames of Muspelheim. The fire spirits were indifferent.",
+            "Consider your complaint enshrined in the Hall of Forgotten Things. It's very exclusive.",
+            "I'll respond to this after the Fimbulwinter. Might be a while. Dress warmly.",
+            "Your grievance is valid. Valid as a wooden shield against Surtr's flames.",
+            "I've translated your complaint into the language of the Vanir. They said 'what is this?'",
+            "A grievance worthy of Skadi's icy glare. I'll stare at it just as coldly.",
+            "I'll take care of this as soon as I finish stealing more apples of immortality.",
+            "Your complaint has been added to the eternal chain of Gleipnir. It's now bound until Ragnarök.",
+            "I'll resolve this with the same haste I used to retrieve Mjölnir. So, eventually, after many pranks.",
+            "Your words have been carved into the roots of Yggdrasil. The squirrel Ratatoskr spread them as gossip.",
+            "This grievance is now a part of the cosmic balance. In other words, it's been chucked into Ginnungagap.",
+            "I've summoned a council of dwarves to forge a solution. They're on strike.",
+            "Your complaint will be the first problem I solve after Fenrir devours Odin. So, soon-ish.",
+            "I'll give this the attention it deserves: the same amount I gave to Sigyn's bowl. None.",
+            "Your grievance has been woven into the fabric of fate. Unfortunately, the Norns used their 'meh' thread.",
+            "I'll handle this with the subtlety of a giant's sneeze. Which is to say, not subtle at all, but entertaining.",
+            "Your complaint has been promoted to 'Chief Annoyance of the Day'. It's a competitive category.",
+            "I've stored your grievance in the Cave of Forgotten Promises. It's next to my oath to build a wall around Asgard.",
+            "Your grievance touched me. I'll still ignore it, but gently.",
+            "I appreciate your honesty. I'll file this under 'things I might reconsider, maybe'.",
+            "You've clearly suffered. I'll grant you a moment of silence. Starting now. Ending now.",
+            "I'll adopt your grievance as my own. I'm already bored of it.",
+            "You're persistent. I respect that. I'll continue to disappoint you, but respectfully.",
+            "Your complaint shows character. I'll weave it into my next saga. A small part. In the background.",
+            "I'm not without mercy. I'll grant your grievance a brief cameo in my thoughts.",
+            "This is the most persuasive nonsense I've read all day. I'm almost swayed.",
+            "I'll give this careful consideration. For at least three heartbeats.",
+            "You've earned a boon: I'll delay the apocalypse by one minute. Don't waste it.",
+            "Your words have weight. Like a single snowflake on a giant's eyelash. Fleeting, but noted.",
+            "I'll remember this grievance. Until something more interesting happens. So, goodbye.",
+            "I'm feeling generous. I'll only mock this complaint internally.",
+            "Your grievance has been blessed by the trickster. It's still hopeless, but now it glows faintly.",
+            "You're growing on me. Like a harmless fungus. Keep complaining, mortal.",
+            "I've placed your grievance in the hands of fate. She dropped it.",
+            "Your complaint is now a constellation in the night sky. A very small, insignificant one.",
+            "I'll answer your grievance with another question: why should I care?",
+            "Your sorrow has been woven into a new flag. It flies at half-mast for a moment, then I burn it.",
+            "I'll fix this, but first, let me consult the severed head of Mimir. He says 'no comment'.",
+            "Your grievance has been sent to the dwarves for a laugh. They're crafting a snarky rebuttal.",
+            "I've assigned your case to Huginn and Muninn. They'll forget about it by morning.",
+            "Your complaint has been archived in the Underworld's bureaucracy. Expect a response in 1000 years.",
+            "I'll give you a fair hearing. As soon as I find my ear trumpet. Made of cheese.",
+            "Your grievance is noted on a stone tablet. I'm about to drop it.",
+            "I'll resolve this with a grand gesture: a shrug.",
+            "Your complaint has been transmuted into a single tear. I flicked it away.",
+            "I've consulted the runes. They spelled 'LOL'.",
+            "Your words echo in the halls of Valhalla. The echoes are laughing.",
+            "I'll grant your grievance a valkyrie escort to the realm of forgotten things."
+        ];
+
+        const emptyVerdicts = [
+            "You sent an empty grievance. Even my patience has limits. (But it's amusing.)",
+            "Nothing to complain about? How suspicious. I'll keep an eye on you.",
+            "An empty complaint. The void itself is more talkative.",
+            "You offer silence. I accept it as tribute. It's worthless, but poetic.",
+            "A blank grievance. Perhaps you wish to complain about existence itself?",
+            "You sent me nothing. Finally, a gift I can appreciate.",
+        ];
+
+        const gibberishVerdicts = [
+            "I see you've mastered the ancient art of typing nonsense. Impressive.",
+            "Is this a code? A spell? Or just your face hitting the keyboard?",
+            "I'll interpret this as a cry for help. Ignored, but poetically.",
+            "Your eloquence astounds me. The runes weep with envy.",
+            "Ah, a message from the realm of Chaos. I feel right at home.",
+            "Even Ratatoskr wouldn't deliver this gibberish up and down Yggdrasil.",
+            "I'll file this under 'Things a drunken dwarf would say'.",
+        ];
+
+        function createNonRepeatingQueue(sourceArray) {
+            let queue = [];
+            let lastItem = null;
+            return function getNext() {
+                if (queue.length === 0) {
+                    let newArray = shuffle([...sourceArray]);
+                    if (lastItem !== null && newArray[0] === lastItem && newArray.length > 1) {
+                        const swapIndex = Math.floor(Math.random() * (newArray.length - 1)) + 1;
+                        [newArray[0], newArray[swapIndex]] = [newArray[swapIndex], newArray[0]];
+                    }
+                    queue = newArray;
+                }
+                const item = queue.shift();
+                lastItem = item;
+                return item;
+            };
+        }
+
+        const getNextVerdict = createNonRepeatingQueue(verdicts);
+        const getNextEmptyVerdict = createNonRepeatingQueue(emptyVerdicts);
+        const getNextGibberishVerdict = createNonRepeatingQueue(gibberishVerdicts);
+
+        sendBtn.addEventListener('click', () => {
+            const complaint = grievanceInput.value.trim();
+            let verdict = '';
+            if (complaint === '') {
+                verdict = getNextEmptyVerdict();
+            } else if (complaint.length < 3 || /^[^a-zA-Z0-9]+$/.test(complaint) || /^(.)\1+$/.test(complaint)) {
+                verdict = getNextGibberishVerdict();
+            } else {
+                verdict = getNextVerdict();
+            }
+            verdictText.textContent = `"${verdict}"`;
+            grievanceForm.classList.add('hidden');
+            verdictBox.classList.remove('hidden');
+        });
+
+        fileAgainBtn.addEventListener('click', () => {
+            grievanceInput.value = '';
+            verdictBox.classList.add('hidden');
+            grievanceForm.classList.remove('hidden');
+            grievanceInput.focus();
+        });
+
+        // Счётчик Рагнарёка
+        function startRagnarokCountdown() {
+            const now = Date.now();
+            const randomYears = Math.floor(Math.random() * 9) + 1;
+            const randomDays = Math.floor(Math.random() * 365);
+            const randomHours = Math.floor(Math.random() * 24);
+            const randomMinutes = Math.floor(Math.random() * 60);
+            const randomSeconds = Math.floor(Math.random() * 60);
+            const endTime = now +
+                randomYears * 31556952000 +
+                randomDays * 86400000 +
+                randomHours * 3600000 +
+                randomMinutes * 60000 +
+                randomSeconds * 1000;
+            const timerElement = document.getElementById('ragnarokTimer');
+            const tick = () => {
+                const diff = endTime - Date.now();
+                if (diff <= 0) {
+                    timerElement.textContent = "It has begun.";
+                    return;
+                }
+                const y = Math.floor(diff / 31556952000);
+                const d = Math.floor((diff % 31556952000) / 86400000);
+                const h = Math.floor((diff % 86400000) / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                timerElement.textContent = `${y}y ${d}d ${h}h ${m}m ${s}s`;
+            };
+            tick();
+            setInterval(tick, 1000);
+        }
+        startRagnarokCountdown();
+
+        // Подкидыш (через 40 секунд)
+        const foundlingToast = document.getElementById('foundlingToast');
+        const giftItemSpan = document.getElementById('giftItem');
+        function showFoundling() {
+            const randomGift = offerings[Math.floor(Math.random() * offerings.length)];
+            giftItemSpan.textContent = randomGift;
+            foundlingToast.classList.add('show');
+            setTimeout(() => foundlingToast.classList.remove('show'), 5000);
+        }
+        setTimeout(showFoundling, 40000);
+
+        // Приветственная тряска — надпись вверху
+        function randomEncounter() {
+            document.body.classList.add('shake');
+            document.querySelectorAll('.quote-block, .altar-block, .ledger-block').forEach(el => {
+                el.classList.add('block-flicker');
+            });
+            const overlay = document.createElement('div');
+            overlay.className = 'loki-overlay';
+            const text = document.createElement('div');
+            text.className = 'loki-overlay-text';
+            text.textContent = 'Loki is here';
+            overlay.appendChild(text);
+            document.body.appendChild(overlay);
+
+            setTimeout(() => {
+                document.body.classList.remove('shake');
+                document.querySelectorAll('.block-flicker').forEach(el => el.classList.remove('block-flicker'));
+                overlay.remove();
+            }, 1200);
+        }
+        window.addEventListener('load', randomEncounter);
+    </script>
+</body>
+</html>
